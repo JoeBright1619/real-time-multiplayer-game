@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const expect = require('chai');
 const socket = require('socket.io');
 const cors = require('cors');
+const helmet = require('helmet')
 
 const fccTestingRoutes = require('./routes/fcctesting.js');
 const runner = require('./test-runner.js');
@@ -15,6 +16,25 @@ app.use('/assets', express.static(process.cwd() + '/assets'));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use((req, res, next) => {
+  res.setHeader('X-Powered-By', 'PHP 7.4.3');
+  next();
+});
+
+// Apply Helmet after setting the header
+app.use(
+  helmet({
+    frameguard: { action: 'deny' },
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ['style.com'],
+      },
+    },
+    noCache: true,
+    hidePoweredBy: false, // Let us manually control it
+  })
+);
 
 //For FCC testing purposes and enables user to connect from outside the hosting platform
 app.use(cors({origin: '*'})); 
@@ -22,6 +42,8 @@ app.use(cors({origin: '*'}));
 // Index page (static HTML)
 app.route('/')
   .get(function (req, res) {
+    res.setHeader('X-Powered-By', 'PHP 7.4.3');
+    console.log(res.getHeaders()); // Proper way to log headers
     res.sendFile(process.cwd() + '/views/index.html');
   }); 
 
